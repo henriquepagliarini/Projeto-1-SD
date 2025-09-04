@@ -3,17 +3,21 @@ import sys
 import pika
 
 def main():
-  connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-  channel = connection.channel()
+    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+    channel = connection.channel()
 
-  channel.queue_declare(queue='hello')
+    channel.queue_declare(queue='task_queue', durable=True)
 
-  channel.basic_publish(exchange='',
-                        routing_key='hello',
-                        body='iphone 16 pro max!')
-  print(" [x] Sent 'Hello World!'")
+    message = ' '.join(sys.argv[1:]) or "Hello World!"
+    channel.basic_publish(exchange='',
+                        routing_key='task_queue',
+                        body=message,
+                        properties=pika.BasicProperties(
+                            delivery_mode = pika.Delivery_mode.Persistent
+                        ))
+    print(f" [x] Sent {message}")
 
-  connection.close()
+    connection.close()
 
 if __name__ == '__main__':
     try:
