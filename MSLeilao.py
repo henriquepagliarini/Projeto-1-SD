@@ -11,9 +11,8 @@ from QueueNames import QueueNames
 from RabbitMQConnection import RabbitMQConnection
 
 class MSLeilao:
-    def __init__(self):
-        self.rabbit = RabbitMQConnection()
-        self.rabbit.connect()
+    def __init__(self, rabbit: RabbitMQConnection):
+        self.rabbit = rabbit
         self.scheduler = BackgroundScheduler()
         self.setupQueues()
         self.lots = self.initializeLots()
@@ -21,22 +20,14 @@ class MSLeilao:
         print("MS Leilão configurado.")
 
     def setupQueues(self):
-        exchange = "leiloes"
-        self.rabbit.setupExchange(exchange)
-        
-        s = QueueNames.AUCTION_STARTED.__str__()
-        self.rabbit.setupQueue(exchange, s, s)
-        print(f"MS Leilão: Fila '{s}' configurada\n")
-        
-        s = QueueNames.AUCTION_ENDED.__str__()
-        self.rabbit.setupQueue(exchange, s, s)
-        print(f"MS Leilão: Fila '{s}' configurada\n")
+        self.rabbit.setupRabbitQueues(self.rabbit.exchange, QueueNames.AUCTION_STARTED.__str__())
+        self.rabbit.setupRabbitQueues(self.rabbit.exchange, QueueNames.AUCTION_ENDED.__str__())
 
     def initializeLots(self) -> list[Lot]:
         lots = [
-            Lot(1, "Celular", {"seconds": 10}, {"minutes": 2}),
-            Lot(2, "Televisão", {"seconds": 30}, {"minutes": 3}),
-            Lot(3, "Carro", {"seconds": 40}, {"minutes": 2})
+            Lot(1, "Celular", {"seconds": 10}, {"seconds": 15}, self.rabbit),
+            Lot(2, "Televisão", {"seconds": 20}, {"seconds": 10}, self.rabbit),
+            Lot(3, "Carro", {"seconds": 25}, {"seconds": 10}, self.rabbit)
         ]
         print("Lotes inicializados")
         return lots
@@ -94,10 +85,10 @@ class MSLeilao:
                 }
                 self.publishEvent(QueueNames.AUCTION_ENDED.__str__(), event)
 
-                print(f"Leilão {lot.id} finalizado: {leilao.description}")
+                print(f"Leilão {lot.id} finalizado: {lot.description}")
 
-                if leilao.winner:
-                    print(f"Vencedor: {leilao.winner.name} - R${leilao.currenteBid:.2f}")
+                if lot.winner:
+                    print(f"Vencedor: {lot.winner.name} - R${lot.currenteBid:.2f}")
                 else:
                     print(f"Sem lances")
             except Exception as e:
@@ -116,9 +107,6 @@ class MSLeilao:
             print(f"Erro ao publicar evento: {e}")
 
     def findLotById(self, lot_id: int) -> Lot | None:
-        if lot_id < 0:
-            return None
-        
         for lot in self.lots:
             if lot.id == lot_id:
                 return lot
@@ -148,14 +136,8 @@ class MSLeilao:
             except SystemExit:
                 os._exit(130)
         except Exception as e:
-            print(f"Erro: {e}")
+            print(f"Erro no MS Leilão: {e}")
         finally:
             self.scheduler.shutdown()
             self.rabbit.disconnect()
-            print("Sistema terminado com sucesso")
-
-
-if __name__ == "__main__":
-    print("Iniciando...")
-    ms_leilao = MSLeilao()
-    ms_leilao.startService()
+            print("MS Leilão terminado com sucesso")

@@ -1,21 +1,27 @@
 from datetime import datetime, timedelta
 from typing import Dict, Union
 from LotStatus import LotStatus
+from RabbitMQConnection import RabbitMQConnection
 from User import User
 
 TimeConfig = Dict[str, Union[int, float]]
 
 class Lot:
-    def __init__(self, id: int, description: str, start_in: TimeConfig, duration: TimeConfig):
-        self.config = [start_in, duration]
+    def __init__(self, id: int, description: str, start_in: TimeConfig, duration: TimeConfig, rabbit: RabbitMQConnection):
+        self.config = [start_in, duration, rabbit]
         self.id = id
         self.description = description
         self.start_date = self.calculateStartDate()
         self.end_date = self.calculateEndDate()
         self.status = LotStatus.INACTIVE
-        self.currenteBid = 0.0
+        self.currentBid = 0.0
         self.bids = []
         self.winner = None
+        self.setupQueue()
+
+    def setupQueue(self):
+        self.config[2].setupRabbitQueues("leiloes", f"leilao_{self.id}")
+
 
     def parseTimeConfig(self, time_config: TimeConfig):
         delta = timedelta()
