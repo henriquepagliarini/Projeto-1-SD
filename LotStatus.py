@@ -1,9 +1,9 @@
 from enum import Enum
 
 class LotStatus(Enum):
-  INACTIVE = "Inativo"
-  ACTIVE = "Ativo"
-  CLOSED = "Encerrado"
+    INACTIVE = "Inativo"
+    ACTIVE = "Ativo"
+    CLOSED = "Encerrado"
 
-  def __str__(self):
-    return self.value
+    def __str__(self):
+        return self.value

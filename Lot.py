@@ -37,7 +37,7 @@ class Lot:
         delta = self.parseTimeConfig(self.config[1])
         return self.start_date + delta
 
-    def activateLot(self):
+    def openLot(self):
         if self.status == LotStatus.INACTIVE:
             self.status = LotStatus.ACTIVE
             return
@@ -46,6 +46,7 @@ class Lot:
     def closeLot(self):
         if self.status == LotStatus.ACTIVE:
             self.status = LotStatus.CLOSED
+            return
         raise Exception(f"Não é possível encerrar um lote {self.status}")
     
     def addBid(self, bid: float, user: User):
