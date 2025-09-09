@@ -24,7 +24,7 @@ class Cliente:
         self.rabbit.connect()
         self.rabbit.setupDirectExchange("leiloes")
         self.rabbit.setupFanoutExchange(QueueNames.AUCTION_STARTED.__str__())
-        print(f"Cliente {self.user_id} configurado: {self.user_name}")
+        print(f"Cliente {self.user_id} configurado: {self.user_name}.")
 
     def generateKeys(self):
         print("Gerando chaves...")
@@ -40,6 +40,7 @@ class Cliente:
         print("Chaves geradas.")
 
     def signMessage(self, message):
+        print("Assinando mensagem...")
         ordered_message = {
             "auction_id": int(message["auction_id"]),
             "user_id": int(message["user_id"]),
@@ -48,6 +49,7 @@ class Cliente:
         data = json.dumps(ordered_message).encode()
         h = SHA256.new(data)
         signature = pkcs1_15.new(self.private_key).sign(h)
+        print("Mensagem assinada.")
         return base64.b64encode(signature).decode()
 
     def consumeStartedAuction(self):
@@ -63,9 +65,8 @@ class Cliente:
             )
 
             rabbit_consumer.channel.start_consuming()
-            print("Aguardando leilões...")
         except Exception as e:
-            print(f"Erro no consumidor de leilões iniciados: {e}")
+            print(f"Erro no consumidor de leilões iniciados: {e}.")
         finally:
             rabbit_consumer.disconnect()
             print("Consumidor de leilões iniciados finalizado.")
@@ -84,7 +85,7 @@ class Cliente:
             print(f"  Fim: {auction["end_date"]}")
 
         except Exception as e:
-            print(f"Erro ao processar leilão iniciado: {e}")
+            print(f"Erro ao processar leilão iniciado: {e}.")
 
     def placeBid(self, auction_id: int, value: float):
         bid = {
@@ -100,7 +101,7 @@ class Cliente:
             body=json.dumps(bid),
             properties=pika.BasicProperties(delivery_mode=2)
         )
-        print("Lance enviado!")
+        print("Lance enviado.")
         if auction_id not in self.selected_auctions:
             self.consumeSelectedAuction(auction_id)
 
@@ -124,7 +125,7 @@ class Cliente:
             consumer_rabbit.channel.start_consuming()
             print(f"Ouvindo notificações para o leilão {auction_id}.")
         except Exception as e:
-            print(f"Erro no consumidor do leilão {auction_id}: {e}")
+            print(f"Erro no consumidor do leilão {auction_id}: {e}.")
         finally:
             consumer_rabbit.disconnect()
             print(f"Consumidor do leilão {auction_id} finalizado.")
@@ -133,20 +134,21 @@ class Cliente:
         try:
             event = json.loads(body)
             if event["type"] == "lance_realizado":
-                print(f"Leilão {event['auction_id']} - Novo lance: user {event['user_id']} = R${event['value']:.2f}")
+                print(f"Leilão {event['auction_id']} - Novo lance: user {event['user_id']} = R${event['value']:.2f}.")
             elif event["type"] == "leilao_finalizado":
-                print(f"Leilão {event['auction_id']} - ENCERRADO - Vencedor: user {event['user_id']} por R${event['highest_bid']:.2f}")
+                print(f"Leilão {event['auction_id']} - ENCERRADO - Vencedor: user {event['user_id']} por R${event['highest_bid']:.2f}.")
             else:
-                print(f"Formato de notificação desconhecido")
+                print(f"Formato de notificação desconhecido.")
         except Exception as e:
-            print(f"Erro ao processar notificação: {e}")
+            print(f"Erro ao processar notificação: {e}.")
 
     def startService(self):
-        print(f"Iniciando cliente {self.user_name}")
+        print(f"Iniciando cliente {self.user_name}...")
         print("--------------------------------")
         try:
             consume_thread = threading.Thread(target=self.consumeStartedAuction, daemon=True)
             consume_thread.start()
+            print("Aguardando leilões...")
             time.sleep(1)
 
             while True:
@@ -169,10 +171,10 @@ class Cliente:
                     print("Opção inválida!")
                 time.sleep(1)
         except KeyboardInterrupt:
-            print("\nCliente interrompido")
+            print("\nCliente interrompido.")
         finally:
             self.rabbit.disconnect()
-            print("Cliente finalizado")
+            print("Cliente finalizado.")
 
 if __name__ == "__main__":
     try:
@@ -189,4 +191,4 @@ if __name__ == "__main__":
     except ValueError:
         print("ID deve ser um número.")
     except Exception as e:
-        print(f"Erro ao iniciar cliente: {e}")
+        print(f"Erro ao iniciar cliente: {e}.")
