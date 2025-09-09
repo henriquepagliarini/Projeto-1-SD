@@ -1,6 +1,6 @@
 from enum import Enum
 
-class LotStatus(Enum):
+class AuctionStatus(Enum):
     INACTIVE = "Inativo"
     ACTIVE = "Ativo"
     CLOSED = "Encerrado"

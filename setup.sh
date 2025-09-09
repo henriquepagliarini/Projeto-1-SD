@@ -5,6 +5,6 @@ python3 -m venv venv
 source venv/bin/activate
 
 echo "Instalando dependências..."
-pip install apscheduler pika rsa
+pip install apscheduler pika rsa pycryptodome
 
 echo "Ambiente configurado!"
