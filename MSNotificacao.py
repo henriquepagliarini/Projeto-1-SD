@@ -11,6 +11,18 @@ class MSNotificacao:
         self.rabbit.setupDirectExchange("leiloes")
         print("MS Notificação configurado.")
 
+    def setupQueues(self):
+        self.rabbit.setupQueue(
+            self.rabbit.direct_exchange,
+            QueueNames.BID_VALIDATED.__str__(),
+            QueueNames.BID_VALIDATED.__str__()
+        )
+        self.rabbit.setupQueue(
+            self.rabbit.direct_exchange,
+            QueueNames.AUCTION_WINNER.__str__(),
+            QueueNames.AUCTION_WINNER.__str__()
+        )
+
     def consumeEvent(self):
         self.rabbit.channel.basic_consume(
             queue=QueueNames.BID_VALIDATED.__str__(),
@@ -68,7 +80,7 @@ class MSNotificacao:
         print("--------------------------------")
         print("Aguardando notificações para enviar...")
         try:
-            self.consumeEvents()
+            self.consumeEvent()
         except KeyboardInterrupt:
             print("MS Notificação interrompido")
         except Exception as e:

@@ -17,7 +17,7 @@ class MSLance:
         self.rabbit.setupFanoutExchange(QueueNames.AUCTION_STARTED.__str__())
 
         self.active_auctions = {}
-        self.public_keys = self.loadPublicKeys()
+        self.public_keys = None
         self.auction_started_queue = None
         self.setupQueues()
         print("MS Lance configurado")
@@ -148,6 +148,7 @@ class MSLance:
             print(f"Erro ao processar lance: {e}")
 
     def validateBid(self, bid_data, auction_id: int, user_id: int, value: float, signature):
+        self.public_keys = self.loadPublicKeys()
         if auction_id not in self.active_auctions:
             print(f"Lance rejeitado: Leilão {auction_id} não está ativo")
             return False
@@ -158,9 +159,9 @@ class MSLance:
 
         try:
             temp_bid = {
-                "auction_id": auction_id,
-                "user_id": user_id,
-                "value": value
+                "auction_id": int(auction_id),
+                "user_id": int(user_id),
+                "value": float(value)
             }
             signed_data = json.dumps(temp_bid).encode()
             h = SHA256.new(signed_data)

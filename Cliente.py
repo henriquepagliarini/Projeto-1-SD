@@ -100,7 +100,7 @@ class Cliente:
             body=json.dumps(bid),
             properties=pika.BasicProperties(delivery_mode=2)
         )
-        print("Lance publicado!")
+        print("Lance enviado!")
         if auction_id not in self.selected_auctions:
             self.consumeSelectedAuction(auction_id)
 
@@ -137,7 +137,7 @@ class Cliente:
             elif event["type"] == "leilao_finalizado":
                 print(f"Leilão {event['auction_id']} - ENCERRADO - Vencedor: user {event['user_id']} por R${event['highest_bid']:.2f}")
             else:
-                print(f"[Leilão {event.get('auction_id','?')}] Evento: {event}")
+                print(f"Formato de notificação desconhecido")
         except Exception as e:
             print(f"Erro ao processar notificação: {e}")
 
