@@ -10,7 +10,7 @@ from RabbitMQConnection import RabbitMQConnection
 
 class MSLance:
     def __init__(self):
-        print("Configurando MS Lance")
+        print("Configurando MS Lance...")
         self.rabbit = RabbitMQConnection()
         self.rabbit.connect()
         self.rabbit.setupDirectExchange("leiloes")
@@ -20,9 +20,10 @@ class MSLance:
         self.public_keys = None
         self.auction_started_queue = None
         self.setupQueues()
-        print("MS Lance configurado")
+        print("MS Lance configurado.")
 
     def loadPublicKeys(self):
+        print("Carregando chaves públicas...")
         keys = {}
         keys_dir = "public_keys"
 
@@ -36,9 +37,9 @@ class MSLance:
                     user_id = int(filename.split("_")[1])
                     with open(os.path.join(keys_dir, filename), "rb") as f:
                         keys[user_id] = RSA.import_key(f.read())
-                    print(f"Chave pública do usuário {user_id} carregada")
+                    print(f"Chave pública do usuário {user_id} carregada.")
                 except (ValueError, IndexError) as e:
-                    print(f"Erro ao processar arquivo {filename}: {e}")
+                    print(f"Erro ao processar arquivo {filename}: {e}.")
         return keys
 
     def setupQueues(self):
@@ -80,7 +81,7 @@ class MSLance:
             )
             self.rabbit.channel.start_consuming()
         except Exception as e:
-            print(f"Erro no consumo de eventos do MS Lance: {e}")
+            print(f"Erro no consumo de eventos do MS Lance: {e}.")
 
     def publishEvent(self, event: dict, routing_key: str):
         self.rabbit.channel.basic_publish(
@@ -99,7 +100,7 @@ class MSLance:
                 "winner": auction_data.get("winner")
             }
         except Exception as e:
-            print(f"Erro ao processar leilão iniciado: {e}")
+            print(f"Erro ao processar leilão iniciado: {e}.")
 
     def processAuctionEnded(self, ch, method, properties, body):
         try:
@@ -115,13 +116,13 @@ class MSLance:
                     "user_id": winner,
                     "highest_bid": highest_bid
                 }
-                print(f"        Vencedor: {winner} - R${highest_bid:.2f}")
+                print(f"        Vencedor: {winner} - R${highest_bid:.2f}.")
                 self.publishEvent(event, QueueNames.AUCTION_WINNER.__str__())
             else:
-                print(f"        Sem lances")
+                print(f"        Sem lances.")
             del self.active_auctions[auction_id]
         except Exception as e:
-            print(f"Erro ao processar leilão finalizado: {e}")
+            print(f"Erro ao processar leilão finalizado: {e}.")
 
     def processBid(self, ch, method, properties, body):
         try:
@@ -143,18 +144,18 @@ class MSLance:
                 "value": value
             }
             self.publishEvent(event, QueueNames.BID_VALIDATED.__str__())
-            print(f"Lance validado: Leilão {auction_id}, Usuário {user_id}, R${value:.2f}")
+            print(f"Lance validado: Leilão {auction_id}, Usuário {user_id}, R${value:.2f}.")
         except Exception as e:
-            print(f"Erro ao processar lance: {e}")
+            print(f"Erro ao processar lance: {e}.")
 
     def validateBid(self, bid_data, auction_id: int, user_id: int, value: float, signature):
         self.public_keys = self.loadPublicKeys()
         if auction_id not in self.active_auctions:
-            print(f"Lance rejeitado: Leilão {auction_id} não está ativo")
+            print(f"Lance rejeitado: Leilão {auction_id} não está ativo.")
             return False
 
         if user_id not in self.public_keys:
-            print(f"Lance rejeitado: Chave pública do usuário {user_id} não encontrada")
+            print(f"Lance rejeitado: Chave pública do usuário {user_id} não encontrada.")
             return False
 
         try:
@@ -167,26 +168,25 @@ class MSLance:
             h = SHA256.new(signed_data)
             pkcs1_15.new(self.public_keys[user_id]).verify(h, signature)
         except (ValueError, TypeError):
-            print(f"Lance rejeitado: Assinatura inválida do usuário {user_id}")
+            print(f"Lance rejeitado: Assinatura inválida do usuário {user_id}.")
             return False
 
         highest_bid = self.active_auctions[auction_id].get("highest_bid")
         if value <= highest_bid:
-            print(f"Lance rejeitado: Valor {value} menor ou igual ao atual {highest_bid}")
+            print(f"Lance rejeitado: Valor {value} menor ou igual ao atual {highest_bid}.")
             return False
         return True
 
     def startService(self):
-        print("Iniciando MS Lance")
+        print("Iniciando MS Lance...")
         print("--------------------------------")
-        print("Aguardando leilões e lances...")
-
         try:
+            print("Aguardando leilões e lances...")
             self.consumeEvent()
         except KeyboardInterrupt:
-            print("MS Lance interrompido")
+            print("MS Lance interrompido.")
         except Exception as e:
-            print(f"Erro no MS Lance: {e}")
+            print(f"Erro no MS Lance: {e}.")
         finally:
             self.rabbit.disconnect()
-            print("MS Lance terminado com sucesso")
+            print("MS Lance terminado com sucesso.")

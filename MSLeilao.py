@@ -10,7 +10,7 @@ from RabbitMQConnection import RabbitMQConnection
 
 class MSLeilao:
     def __init__(self):
-        print("Configurando MS Leilão")
+        print("Configurando MS Leilão...")
         self.rabbit = RabbitMQConnection()
         self.rabbit.connect()
         self.rabbit.setupDirectExchange("leiloes")
@@ -58,7 +58,7 @@ class MSLeilao:
                 f"leilao_{auction.id}"
             )
 
-        print("Leilões inicializados")
+        print("Leilões inicializados.")
         return auctions
 
     def scheduleAuctions(self):
@@ -79,6 +79,7 @@ class MSLeilao:
             print(f"Leilão {auctions.id}: {auctions.description}")
             print(f"Início: {auctions.start_date.strftime("%H:%M:%S")}")
             print(f"Fim: {auctions.end_date.strftime("%H:%M:%S")}\n")
+            print("Leilões agendados.")
 
     def startAuction(self, auction_id: int):
         auction = self.findAuctionById(auction_id)
@@ -116,7 +117,7 @@ class MSLeilao:
                 "status": auction.status.__str__(),
             }
             self.publishDirect(event, QueueNames.AUCTION_ENDED.__str__())
-            print(f"    Leilão {auction.id} finalizado: {auction.description}")
+            print(f"    Leilão {auction.id} finalizado: {auction.description}.")
         except Exception as e:
             print(f"Erro ao finalizar leilão {auction.id}: {e}")
 
@@ -128,25 +129,24 @@ class MSLeilao:
 
     def startService(self):
         self.scheduler.start()
-        print("Scheduler iniciado")
-        print("Iniciando MS Leilão")
-        print("--------------------------------")
+        print("Scheduler iniciado.")
+        print("Iniciando MS Leilão...")
+        time.sleep(3)
         print(f"Agora são {datetime.now().strftime('%H:%M:%S')}\n")
-
         print("Leilões agendados:")
         for auction in self.auctions:
             time_to_start = (auction.start_date - datetime.now()).total_seconds()
-            print(f"    Leilão {auction.id}: {auction.description} inicia em {time_to_start:.0f}s")
+            print(f"    Leilão {auction.id}: {auction.description} inicia em {time_to_start:.0f}s.")
 
         try:
             while True:
                 time.sleep(1)
                 
         except KeyboardInterrupt:
-            print("MS Leilão interrompido")
+            print("MS Leilão interrompido.")
         except Exception as e:
-            print(f"Erro no MS Leilão: {e}")
+            print(f"Erro no MS Leilão: {e}.")
         finally:
             self.scheduler.shutdown()
             self.rabbit.disconnect()
-            print("MS Leilão terminado com sucesso")
+            print("MS Leilão terminado com sucesso.")

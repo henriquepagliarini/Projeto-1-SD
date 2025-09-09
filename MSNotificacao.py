@@ -5,7 +5,7 @@ from RabbitMQConnection import RabbitMQConnection
 
 class MSNotificacao:
     def __init__(self):
-        print("Configurando MS Notificação")
+        print("Configurando MS Notificação...")
         self.rabbit = RabbitMQConnection()
         self.rabbit.connect()
         self.rabbit.setupDirectExchange("leiloes")
@@ -48,9 +48,9 @@ class MSNotificacao:
                 "value": bid_data["value"],
             }
             self.publishToAuctionQueue(auction_id, event)
-            print(f"Lance validado enviado para o leilão {auction_id}")
+            print(f"Lance validado enviado para o leilão {auction_id}.")
         except Exception as e:
-            print(f"Erro ao processar lance válido: {e}")
+            print(f"Erro ao processar lance válido: {e}.")
     
     def processAuctionWinner(self, ch, method, properties, body):
         try:
@@ -65,7 +65,7 @@ class MSNotificacao:
             self.publishToAuctionQueue(auction_id, event)
             print(f"Leilão {auction_id} finalizado enviado.")
         except Exception as e:
-            print(f"Erro ao processar leilão vencedor: {e}")
+            print(f"Erro ao processar leilão vencedor: {e}.")
 
     def publishToAuctionQueue(self, auction_id, event):
         self.rabbit.channel.basic_publish(
@@ -76,10 +76,10 @@ class MSNotificacao:
         )
 
     def startService(self):
-        print("Iniciando MS Notificação")
+        print("Iniciando MS Notificação...")
         print("--------------------------------")
-        print("Aguardando notificações para enviar...")
         try:
+            print("Aguardando notificações para enviar...")
             self.consumeEvent()
         except KeyboardInterrupt:
             print("MS Notificação interrompido")

@@ -13,7 +13,7 @@ class RabbitMQConnection:
                 pika.ConnectionParameters("localhost")
             )
             self.channel = self.connection.channel()
-            print("Conectado ao RabbitMQ.")
+            print("Conectado com sucesso.")
         except Exception as e:
             print(f"Erro ao conectar {e}.")
 
@@ -49,7 +49,7 @@ class RabbitMQConnection:
             queue=queue,
             routing_key=routing_key
         )
-        print(f"Fila '{queue}' iniciada.")
+        print(f"Fila '{queue}' declarada e vinculada.")
     
     def setupAnonymousQueue(self, exchange: str) -> str:
         queue = self.channel.queue_declare(
@@ -62,5 +62,5 @@ class RabbitMQConnection:
             exchange=exchange,
             queue=queue_name,
         )
-        print(f"Fila anônima '{queue_name}' vinculada.")
+        print(f"Fila anônima '{queue_name}' declarada e vinculada.")
         return queue_name
