@@ -24,7 +24,6 @@ class Cliente:
         self.rabbit.connect()
         self.rabbit.setupDirectExchange("leiloes")
         self.rabbit.setupFanoutExchange(QueueNames.AUCTION_STARTED.__str__())
-        self.auction_started_queue = self.rabbit.setupAnonymousQueue(self.rabbit.fanout_exchange)
         print(f"Cliente {self.user_id} configurado: {self.user_name}")
 
     def generateKeys(self):
@@ -46,20 +45,30 @@ class Cliente:
             "user_id": int(message["user_id"]),
             "value": float(message["value"])
         }
-        data = json.dumps(ordered_message, sort_keys=True).encode()
+        data = json.dumps(ordered_message).encode()
         h = SHA256.new(data)
         signature = pkcs1_15.new(self.private_key).sign(h)
         return base64.b64encode(signature).decode()
 
     def consumeStartedAuction(self):
-        self.rabbit.channel.basic_consume(
-            queue=self.auction_started_queue,
-            on_message_callback=self.processStartedAuction,
-            auto_ack=True
-        )
+        rabbit_consumer = RabbitMQConnection()
+        rabbit_consumer.connect()
+        rabbit_consumer.setupFanoutExchange(QueueNames.AUCTION_STARTED.__str__())
+        auction_started_queue = rabbit_consumer.setupAnonymousQueue(rabbit_consumer.fanout_exchange)
+        try:
+            rabbit_consumer.channel.basic_consume(
+                queue=auction_started_queue,
+                on_message_callback=self.processStartedAuction,
+                auto_ack=True
+            )
 
-        self.rabbit.channel.start_consuming()
-        print("Aguardando leilões...")
+            rabbit_consumer.channel.start_consuming()
+            print("Aguardando leilões...")
+        except Exception as e:
+            print(f"Erro no consumidor de leilões iniciados: {e}")
+        finally:
+            rabbit_consumer.disconnect()
+            print("Consumidor de leilões iniciados finalizado.")
 
     def processStartedAuction(self, ch, method, properties, body):
         try:
@@ -85,32 +94,40 @@ class Cliente:
         }
         bid["signature"] = self.signMessage(bid)
 
-        temp_rabbit = RabbitMQConnection()
-        temp_rabbit.connect()
-        temp_rabbit.channel.basic_publish(
+        self.rabbit.channel.basic_publish(
             exchange=self.rabbit.direct_exchange,
             routing_key=QueueNames.BID_DONE.__str__(),
             body=json.dumps(bid),
             properties=pika.BasicProperties(delivery_mode=2)
         )
-        temp_rabbit.disconnect()
         print("Lance publicado!")
         if auction_id not in self.selected_auctions:
             self.consumeSelectedAuction(auction_id)
 
     def consumeSelectedAuction(self, auction_id: int):
-        queue_name = f"cliente_{self.user_id}_leilao_{auction_id}"
-        self.rabbit.setupQueue(self.rabbit.direct_exchange, queue_name, f"leilao_{auction_id}")
         self.selected_auctions.add(auction_id)
-        
-        channel = self.rabbit.connection.channel()
-        channel.basic_consume(
-            queue=queue_name,
-            on_message_callback=self.processAuctionNotification,
-            auto_ack=True
-        )
-        t = threading.Thread(target=channel.start_consuming, daemon=True)
+        t = threading.Thread(target=self.taskStarter, args=(auction_id,), daemon=True)
         t.start()
+
+    def taskStarter(self, auction_id: int):
+        consumer_rabbit = RabbitMQConnection()
+        consumer_rabbit.connect()
+        consumer_rabbit.setupDirectExchange("leiloes")
+        try:
+            queue_name = f"cliente_{self.user_id}_leilao_{auction_id}"
+            consumer_rabbit.setupQueue(consumer_rabbit.direct_exchange, queue_name, f"leilao_{auction_id}")
+            consumer_rabbit.channel.basic_consume(
+                queue=queue_name,
+                on_message_callback=self.processAuctionNotification,
+                auto_ack=True
+            )
+            consumer_rabbit.channel.start_consuming()
+            print(f"Ouvindo notificações para o leilão {auction_id}.")
+        except Exception as e:
+            print(f"Erro no consumidor do leilão {auction_id}: {e}")
+        finally:
+            consumer_rabbit.disconnect()
+            print(f"Consumidor do leilão {auction_id} finalizado.")
 
     def processAuctionNotification(self, ch, method, properties, body):
         try:
@@ -130,6 +147,8 @@ class Cliente:
         try:
             consume_thread = threading.Thread(target=self.consumeStartedAuction, daemon=True)
             consume_thread.start()
+            time.sleep(1)
+
             while True:
                 print("\nOpções:")
                 print("1. Fazer lance em um leilão")

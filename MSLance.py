@@ -162,7 +162,7 @@ class MSLance:
                 "user_id": user_id,
                 "value": value
             }
-            signed_data = json.dumps(temp_bid, sort_keys=True).encode()
+            signed_data = json.dumps(temp_bid).encode()
             h = SHA256.new(signed_data)
             pkcs1_15.new(self.public_keys[user_id]).verify(h, signature)
         except (ValueError, TypeError):

@@ -114,8 +114,6 @@ class MSLeilao:
                 "start_date": auction.start_date.isoformat(),
                 "end_date": auction.end_date.isoformat(),
                 "status": auction.status.__str__(),
-                "highest_bid": auction.highest_bid,
-                "winner": auction.winner
             }
             self.publishDirect(event, QueueNames.AUCTION_ENDED.__str__())
             print(f"    Leilão {auction.id} finalizado: {auction.description}")
