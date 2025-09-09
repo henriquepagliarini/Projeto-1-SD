@@ -31,11 +31,9 @@ class MSLance:
             return keys
 
         for filename in os.listdir(keys_dir):
-            print(filename)
             if filename.startswith("user_") and filename.endswith("_public.pem"):
                 try:
                     user_id = int(filename.split("_")[1])
-                    print(user_id)
                     with open(os.path.join(keys_dir, filename), "rb") as f:
                         keys[user_id] = RSA.import_key(f.read())
                     print(f"Chave pública do usuário {user_id} carregada")
@@ -49,11 +47,6 @@ class MSLance:
             QueueNames.BID_DONE.__str__(),
             QueueNames.BID_DONE.__str__()
         )
-        #self.rabbit.setupQueue(
-        #    self.rabbit.direct_exchange,
-        #    QueueNames.AUCTION_ENDED.__str__(),
-        #    QueueNames.AUCTION_ENDED.__str__()
-        #)
         self.rabbit.setupQueue(
             self.rabbit.direct_exchange,
             QueueNames.BID_VALIDATED.__str__(),
@@ -90,7 +83,6 @@ class MSLance:
             print(f"Erro no consumo de eventos do MS Lance: {e}")
 
     def publishEvent(self, event: dict, routing_key: str):
-
         self.rabbit.channel.basic_publish(
             exchange=self.rabbit.direct_exchange,
             routing_key=routing_key,

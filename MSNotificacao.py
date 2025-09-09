@@ -11,18 +11,6 @@ class MSNotificacao:
         self.rabbit.setupDirectExchange("leiloes")
         print("MS Notificação configurado.")
 
-    def setupQueues(self):
-        self.rabbit.setupQueue(
-            self.rabbit.direct_exchange,
-            QueueNames.BID_VALIDATED.__str__(),
-            QueueNames.BID_VALIDATED.__str__()
-        )
-        self.rabbit.setupQueue(
-            self.rabbit.direct_exchange,
-            QueueNames.AUCTION_WINNER.__str__(),
-            QueueNames.AUCTION_WINNER.__str__()
-        )
-
     def consumeEvent(self):
         self.rabbit.channel.basic_consume(
             queue=QueueNames.BID_VALIDATED.__str__(),
@@ -62,7 +50,7 @@ class MSNotificacao:
                 "user_id": winner_data["user_id"],
                 "highest_bid": winner_data["highest_bid"],
             }
-            self.publishToLotQueue(auction_id, event)
+            self.publishToAuctionQueue(auction_id, event)
             print(f"Leilão {auction_id} finalizado enviado.")
         except Exception as e:
             print(f"Erro ao processar leilão vencedor: {e}")
