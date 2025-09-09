@@ -115,7 +115,10 @@ class MSLance:
                     "user_id": winner,
                     "highest_bid": highest_bid
                 }
+                print(f"        Vencedor: {winner} - R${highest_bid:.2f}")
                 self.publishEvent(event, QueueNames.AUCTION_WINNER.__str__())
+            else:
+                print(f"        Sem lances")
             del self.active_auctions[auction_id]
         except Exception as e:
             print(f"Erro ao processar leilão finalizado: {e}")

@@ -97,7 +97,7 @@ class MSLeilao:
                 "winner": auction.winner
             }
             self.publishFanout(event)
-            print(f"Leilão {auction.id} iniciado: {auction.description}.")
+            print(f"    Leilão {auction.id} iniciado: {auction.description}.")
         except Exception as e:
             print(f"Erro ao iniciar leilão {auction.id}: {e}")
 
@@ -119,11 +119,6 @@ class MSLeilao:
             }
             self.publishDirect(event, QueueNames.AUCTION_ENDED.__str__())
             print(f"    Leilão {auction.id} finalizado: {auction.description}")
-
-            if auction.winner != -1:
-                print(f"        Vencedor: {auction.winner} - R${auction.highest_bid:.2f}")
-            else:
-                print(f"        Sem lances")
         except Exception as e:
             print(f"Erro ao finalizar leilão {auction.id}: {e}")
 
