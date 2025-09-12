@@ -9,6 +9,7 @@ class MSNotificacao:
         self.rabbit = RabbitMQConnection()
         self.rabbit.connect()
         self.rabbit.setupDirectExchange("leiloes")
+        self.setupQueues()
         print("MS Notificação configurado.")
 
     def setupQueues(self):
